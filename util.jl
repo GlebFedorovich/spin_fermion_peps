@@ -290,27 +290,9 @@ function expectation_value_combined(bra::InfinitePEPS, ham::PEPSKit.LocalOperato
     
     # Use regular map
     term_vals = map(collect(ham.terms)) do (inds, operator)
-        # Convert inds to Vector{CartesianIndex{2}}
         inds_vec = inds
-        # inds_vec = if inds isa Vector
-        #     # Already a vector - could be Vector{CartesianIndex{2}} or Vector{Vector{Int}}
-        #     if length(inds) > 0 && inds[1] isa CartesianIndex
-        #         inds
-        #     elseif length(inds) > 0 && inds[1] isa Vector
-        #         # Vector of vectors - convert to CartesianIndex
-        #         [CartesianIndex(Tuple(v)) for v in inds]
-        #     else
-        #         [CartesianIndex(Tuple(inds))]
-        #     end
-        # elseif inds isa CartesianIndex
-        #     [inds]
-        # elseif inds isa Tuple
-        #     collect(inds)
-        # else
-        #     error("Unknown inds format: $(typeof(inds))")
-        # end
         
-        # Bring term within unit cell - let gradients flow through
+        # Bring term within unit cell if needed, and get normalized indices and shifted PEPS/env
         normalized_inds, shifted_ket, shifted_env, shift_tuple = bring_term_inunitcell(ket, env, inds_vec)
         @show inds_vec
         @show normalized_inds
