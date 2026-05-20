@@ -11,7 +11,7 @@ function ChainRulesCore.rrule(::Type{InfinitePEPS}, A::Matrix{<:PEPSKit.PEPSTens
     network = InfinitePEPS(A)
     function InfinitePEPS_pullback(Δnetwork_)
         Δnetwork = unthunk(Δnetwork_)
-        return NoTangent(), Δnetwork
+        return NoTangent(), PEPSKit.unitcell(Δnetwork)
     end
     return network, InfinitePEPS_pullback
 end
