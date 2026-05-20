@@ -16,14 +16,14 @@ function ChainRulesCore.rrule(::Type{InfinitePEPS}, A::Matrix{<:PEPSKit.PEPSTens
     return network, InfinitePEPS_pullback
 end
 
-function ChainRulesCore.rrule(::Type{InfiniteSquareNetwork}, A::Matrix)
-    network = InfiniteSquareNetwork(A)
-    function InfiniteSquareNetwork_pullback(Δnetwork_)
-        Δnetwork = unthunk(Δnetwork_)
-        return NoTangent(), PEPSKit.unitcell(Δnetwork)
-    end
-    return network, InfiniteSquareNetwork_pullback
-end
+# function ChainRulesCore.rrule(::Type{InfiniteSquareNetwork}, A::Matrix)
+#     network = InfiniteSquareNetwork(A)
+#     function InfiniteSquareNetwork_pullback(Δnetwork_)
+#         Δnetwork = unthunk(Δnetwork_)
+#         return NoTangent(), PEPSKit.unitcell(Δnetwork)
+#     end
+#     return network, InfiniteSquareNetwork_pullback
+# end
 
 # Add rrules for constructors to ensure consistent tangent types
 # function ChainRulesCore.rrule(::Type{InfinitePEPS}, A::Matrix)

@@ -11,17 +11,17 @@ function convert_peps(peps_init, bond_m, fuser)
 end
 
 function local_ipeps_update(peps::InfinitePEPS, gate, inds::Vector{CartesianIndex{2}})
-    peps_A = peps.A
+    # peps_A = peps.A
     inds_set = Set(inds)  # Convert to Set for O(1) lookup
     
     # Create new array without mutation
     peps_A_new = [if CartesianIndex(r, c) in inds_set
-                      @tensor peps_mod[-1; -2 -3 -4 -5] := gate[-1; 1] * peps_A[r,c][1; -2 -3 -4 -5]
+                      @tensor peps_mod[-1; -2 -3 -4 -5] := gate[-1; 1] * peps[r,c][1; -2 -3 -4 -5]
                       peps_mod
                   else
-                      peps_A[r, c]
+                      peps[r, c]
                   end
-                  for r in 1:size(peps_A, 1), c in 1:size(peps_A, 2)]
+                  for r in 1:size(peps, 1), c in 1:size(peps, 2)]
     
     return InfinitePEPS(peps_A_new)
 end
