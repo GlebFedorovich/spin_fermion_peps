@@ -37,19 +37,19 @@ ham = PEPSKit.LocalOperator(lattice,
 function PEPSKit.cost_function(peps::InfinitePEPS, env::CTMRGEnv, O::PEPSKit.LocalOperator)
     @show " I am computing the cost function! "
     E = expectation_value_combined(peps, O, peps, env)
-    # ignore_derivatives() do
-    #     isapprox(imag(E), 0; atol = sqrt(eps(real(E)))) ||
-    #         @warn "Expectation value is not real: $E."
-    # end
+    ignore_derivatives() do
+        isapprox(imag(E), 0; atol = sqrt(eps(real(E)))) ||
+            @warn "Expectation value is not real: $E."
+    end
     return real(E)
 end
 
 
-peps_check = InfinitePEPS(fill(convert_peps(peps_init, bond_matrix, fuser), (2, 2)));
-space(peps_check[1, 1])
-env_space = ℂ^20;
-env0 = CTMRGEnv(randn, Float64, peps_check, env_space);
-cost = PEPSKit.cost_function(peps_check, env0, ham)
+# peps_check = InfinitePEPS(fill(convert_peps(peps_init, bond_matrix, fuser), (2, 2)));
+# space(peps_check[1, 1])
+# env_space = ℂ^20;
+# env0 = CTMRGEnv(randn, Float64, peps_check, env_space);
+# cost = PEPSKit.cost_function(peps_check, env0, ham)
 
 boundary_alg = SimultaneousCTMRG(;
     tol = 1.0e-9, # 1e-8
@@ -124,10 +124,14 @@ function my_hummble_fixedpoint(
     return peps_final, env_final, cost_final, info
 end
 
+
 println(">>> Starting fixedpoint...")
 peps_cell = fill(peps_init, (2, 2));
 peps_merged = InfinitePEPS(fill(convert_peps(peps_init, bond_matrix, fuser), (2, 2)));
+env_space = ℂ^10;
 env0 = CTMRGEnv(randn, ComplexF64, peps_merged, env_space);
+env, _ = leading_boundary(env0, peps_merged, algs.boundary_alg);
+cost_function(peps_merged, env, ham)
 
 peps, env, E, info = my_hummble_fixedpoint(
     ham, peps_cell, env0, algs, bond_matrix, fuser;
