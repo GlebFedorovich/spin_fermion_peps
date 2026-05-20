@@ -11,17 +11,19 @@ function convert_peps(peps_init, bond_m, fuser)
 end
 
 function local_ipeps_update(peps::InfinitePEPS, gate, inds::Vector{CartesianIndex{2}})
-    # Functionally update the PEPS tensors at specified indices
-
-    peps_A = deepcopy(peps.A)
-    for ind in inds
-        r, c = Tuple(ind)
-        r = mod1(r, size(peps_A, 1))
-        c = mod1(c, size(peps_A, 2))
-        @tensor peps_mod[-1; -2 -3 -4 -5] := gate[-1; 1] * peps_A[r,c][1; -2 -3 -4 -5]
-        peps_A[r,c] = peps_mod
-    end
-    return InfinitePEPS(peps_A)
+    peps_A = peps.A
+    inds_set = Set(inds)  # Convert to Set for O(1) lookup
+    
+    # Create new array without mutation
+    peps_A_new = [if CartesianIndex(r, c) in inds_set
+                      @tensor peps_mod[-1; -2 -3 -4 -5] := gate[-1; 1] * peps_A[r,c][1; -2 -3 -4 -5]
+                      peps_mod
+                  else
+                      peps_A[r, c]
+                  end
+                  for r in 1:size(peps_A, 1), c in 1:size(peps_A, 2)]
+    
+    return InfinitePEPS(peps_A_new)
 end
 
 # Custom ChainRules rrule to handle the mutation
@@ -29,21 +31,25 @@ end
 #     result = local_ipeps_update(peps, gate, inds)
     
 #     function local_ipeps_update_pullback(ȳ)
-#         # ȳ is the incoming gradient (an InfinitePEPS or tangent)
-#         if isa(ȳ, InfinitePEPS)
-#             ΔA = ȳ.A
-#         else
-#             ΔA = ȳ.A
-#         end
-        
-#         # Return tangent wrapped as Tangent{InfinitePEPS}
+#         ΔA = ȳ.A
 #         Δpeps = Tangent{InfinitePEPS}(; A = ΔA)
         
-#         return (NoTangent(), Δpeps, NoTangent(), NoTangent())
+#         # Compute gradient for gate by contracting backwards
+#         peps_A = peps.A
+#         Δgate = zero(gate)
+#         for ind in inds
+#             r, c = Tuple(ind)
+#             r = mod1(r, size(peps_A, 1))
+#             c = mod1(c, size(peps_A, 2))
+#             @tensor Δgate[-1; 1] += ΔA[-1; -2 -3 -4 -5] * peps_A[r,c][1; -2 -3 -4 -5]
+#         end
+        
+#         return (NoTangent(), Δpeps, Δgate, NoTangent())
 #     end
     
 #     return result, local_ipeps_update_pullback
 # end
+
 
 function on_site_terms(site_gate, fuser)
     @tensor on_site_term_1[-1; -2] := site_gate[1; 2] * fuser[-1; 1 3 4 5 6] * conj(fuser[-2; 2 3 4 5 6]);
